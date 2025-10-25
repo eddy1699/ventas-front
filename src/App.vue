@@ -8,7 +8,7 @@
 
       <div class="bg-white rounded-xl shadow p-4 w-full md:w-auto">
         <h2 class="text-sm text-slate-500">Total de hoy</h2>
-        <p class="text-2xl font-semibold text-slate-800">S/ {{ dashboard.totalHoy?.toFixed(2) || '0.00' }}</p>
+        <p class="text-2xl font-semibold text-slate-800">S/ {{ Number(dashboard.totalHoy || 0).toFixed(2) }}</p>
         <div class="text-xs text-slate-400 mt-2">
           Top:</div>
         <ul class="text-xs text-slate-600">
@@ -88,8 +88,12 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-const backendURL = 'ventas-back.railway.internal'
-
+const backendURL = 'http://localhost:8080'
+const totalHoy = ref(0);
+onMounted(async () => {
+  const res = await axios.get('/api/sales/today');
+  totalHoy.value = Number(res.data.total || 0);
+});
 const form = ref({
   name: '',
   category: 'plato',
@@ -141,7 +145,6 @@ async function addQuickSale(p) {
 async function fetchProducts() {
   const { data } = await axios.get(backendURL + '/api/products')
   products.value = data
-  console.log(products)
 }
 
 async function fetchDashboard() {
