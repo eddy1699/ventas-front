@@ -20,29 +20,7 @@
     </header>
 
     <!-- Formulario nuevo producto -->
-    <section class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-semibold text-slate-800 mb-4">Agregar Producto</h2>
-      <form @submit.prevent="addProduct" class="grid gap-4 md:grid-cols-4">
-        <input v-model="form.name" placeholder="Nombre" class="border p-2 rounded-md w-full border-slate-300" />
-
-        <select v-model="form.category" class="border p-2 rounded-md w-full border-slate-300">
-          <option value="plato">Plato</option>
-          <option value="bebida">Bebida</option>
-          <option value="combo">Combo</option>
-        </select>
-
-        <input v-model.number="form.price" type="number" min="0" step="0.1" placeholder="Precio"
-          class="border p-2 rounded-md w-full border-slate-300" />
-
-        <input type="file" @change="onFileChange"
-          class="border p-2 rounded-md w-full border-slate-300 md:col-span-2" />
-
-        <button
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md px-4 py-2 md:col-span-2">
-          Guardar producto
-        </button>
-      </form>
-    </section>
+    
 
     <!-- Lista de productos -->
     <section>
@@ -80,7 +58,29 @@
         </div>
       </div>
     </section>
+    <section class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Agregar Producto</h2>
+      <form @submit.prevent="addProduct" class="grid gap-4 md:grid-cols-4">
+        <input v-model="form.name" placeholder="Nombre" class="border p-2 rounded-md w-full border-slate-300" />
 
+        <select v-model="form.category" class="border p-2 rounded-md w-full border-slate-300">
+          <option value="plato">Plato</option>
+          <option value="bebida">Bebida</option>
+          <option value="combo">Combo</option>
+        </select>
+
+        <input v-model.number="form.price" type="number" min="0" step="0.1" placeholder="Precio"
+          class="border p-2 rounded-md w-full border-slate-300" />
+
+        <input type="file" @change="onFileChange"
+          class="border p-2 rounded-md w-full border-slate-300 md:col-span-2" />
+
+        <button
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md px-4 py-2 md:col-span-2">
+          Guardar producto
+        </button>
+      </form>
+    </section>
   </div>
 </template>
 
