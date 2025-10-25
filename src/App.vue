@@ -88,7 +88,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-const backendURL = 'http://localhost:8080'
+const backendURL = 'https://ventas-back-bul4.onrender.com'
 const totalHoy = ref(0);
 onMounted(async () => {
   const res = await axios.get('/api/sales/today');
