@@ -141,6 +141,7 @@ async function addQuickSale(p) {
 async function fetchProducts() {
   const { data } = await axios.get(backendURL + '/api/products')
   products.value = data
+  console.log(products)
 }
 
 async function fetchDashboard() {
