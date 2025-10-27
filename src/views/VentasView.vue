@@ -224,7 +224,7 @@ async function removeOneProduct(id)
 }
 onMounted(() => {
   fetchProducts();
-  fetchDashboard();
+//   fetchDashboard();
 });
 </script>
   
