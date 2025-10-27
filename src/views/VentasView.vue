@@ -156,8 +156,10 @@ async function addProduct() {
 // }
 
 async function fetchProducts() {
+    loading.value=true;
   const { data } = await axios.get(backendURL + "/api/products");
   products.value = data;
+  loading.value=false;
 }
 
 async function fetchDashboard() {
