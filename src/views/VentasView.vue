@@ -1,7 +1,7 @@
 <template>
-    
-  
+ 
   <section>
+    <Loader :visible="loading" />   
     <h2 class="text-lg font-semibold text-slate-800 mb-4">Productos</h2>
 
     <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -51,10 +51,18 @@
   </section>
 </template>
 <script setup>
+import Loader from '../components/Loader.vue'
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useToast } from "vue-toast-notification";
 import Swal from 'sweetalert2'
+const loading = ref(false)
+
+const loadData = async () => {
+  loading.value = true
+  await new Promise(r => setTimeout(r, 2000)) // simulamos carga
+  loading.value = false
+}
 const toast = useToast();
 const backendURL = "https://ventas-back-bul4.onrender.com";
 const totalHoy = ref(0);
@@ -87,8 +95,10 @@ async function addQuickSale(p) {
   }
 }
 onMounted(async () => {
+    loading.value = true
   const res = await axios.get("/api/sales/today");
   totalHoy.value = Number(res.data.total || 0);
+  loading.value = false
 
 });
 const form = ref({

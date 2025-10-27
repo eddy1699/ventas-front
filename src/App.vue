@@ -2,13 +2,45 @@
     <div class="app">
       <!-- Barra superior (solo visible en móvil) -->
       <header class="mobile-header">
-        <button class="menu-btn" :class="{ open: sidebarOpen }" @click="toggleSidebar">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <h1 class="brand">PEPES ROLLS & WINGS</h1>
-      </header>
+        <button
+  class="menu-btn"
+  :class="{ open: sidebarOpen }"
+  @click="toggleSidebar"
+  aria-label="Toggle menu"
+>
+  <svg
+    class="icon-layer burger"
+    viewBox="0 0 24 24"
+    width="28"
+    height="28"
+    stroke="#ff6b6b"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  >
+    <!-- 3 líneas horizontales -->
+    <line x1="4" y1="7"  x2="20" y2="7"  />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="17" x2="20" y2="17" />
+  </svg>
+
+  <svg
+    class="icon-layer close"
+    viewBox="0 0 24 24"
+    width="28"
+    height="28"
+    stroke="#ff6b6b"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  >
+    <!-- Dos líneas cruzadas -->
+    <line x1="5" y1="5"  x2="19" y2="19" />
+    <line x1="19" y1="5" x2="5"  y2="19" />
+  </svg>
+</button>
+
+
+  <h1 class="brand">PEPES ROLLS & WINGS</h1>
+</header>
   
       <!-- Sidebar -->
       <aside :class="['sidebar', { open: sidebarOpen }]">
@@ -120,37 +152,68 @@
   }
   
   /* === Botón hamburguesa === */
+/* === Botón hamburguesa (SVG) === */
+/* === Botón hamburguesa responsive === */
+.menu-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 20;
+}
+
+/* ocultar en escritorio */
+@media (min-width: 769px) {
   .menu-btn {
-    width: 30px;
-    height: 22px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
+    display: none;
+  }
+}
+
+/* mostrar en móvil */
+@media (max-width: 768px) {
+  .menu-btn {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    z-index: 20;
   }
-  
-  .menu-btn span {
-    height: 3px;
-    width: 100%;
-    background: #ff6b6b;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-  }
-  
-  /* Animación al abrir */
-  .menu-btn.open span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-  }
-  .menu-btn.open span:nth-child(2) {
-    opacity: 0;
-  }
-  .menu-btn.open span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
-  }
-  
+}
+
+/* Las dos capas del ícono */
+.icon-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+/* Estado inicial: mostramos hamburguesa, ocultamos X */
+.icon-layer.burger {
+  opacity: 1;
+  transform: scale(1);
+}
+.icon-layer.close {
+  opacity: 0;
+  transform: scale(0.5) rotate(-15deg);
+}
+
+/* Estado abierto (.open): mostramos la X y ocultamos hamburguesa */
+.menu-btn.open .icon-layer.burger {
+  opacity: 0;
+  transform: scale(0.5) rotate(15deg);
+}
+
+.menu-btn.open .icon-layer.close {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+
+
+
   /* === Contenido === */
   .content {
     flex: 1;
