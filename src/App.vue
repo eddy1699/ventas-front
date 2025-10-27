@@ -1,13 +1,18 @@
 <template>
     <div class="app">
-      <!-- Botón para abrir/cerrar menú en móvil -->
-      <button class="menu-btn" @click="toggleSidebar">
-        ☰
-      </button>
+      <!-- Barra superior (solo visible en móvil) -->
+      <header class="mobile-header">
+        <button class="menu-btn" :class="{ open: sidebarOpen }" @click="toggleSidebar">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <h1 class="brand">PEPES ROLLS & WINGS</h1>
+      </header>
   
       <!-- Sidebar -->
       <aside :class="['sidebar', { open: sidebarOpen }]">
-        <h2 class="logo">Ventas Diarias</h2>
+        <h2 class="logo">PEPES ROLLS & WINGS</h2>
         <nav>
           <RouterLink to="/" @click="closeSidebar">Ventas</RouterLink>
           <RouterLink to="/productos" @click="closeSidebar">Productos</RouterLink>
@@ -41,115 +46,157 @@
     }
   }
   </script>
-<style scoped>
-.app {
-  display: flex;
-  min-height: 100vh;
-  /* background: #0f1724;
-  color: #fff; */
-}
-
-/* === Sidebar === */
-.sidebar {
-  width: 240px;
-  background: #f8f8ff;
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 10;
-  transition: transform 0.3s ease;
-}
-
-/* Desktop: visible por defecto */
-@media (min-width: 769px) {
+  
+  <style scoped>
+  .app {
+    display: flex;
+    min-height: 100vh;
+    background: #0f1724;
+    color: #fff;
+  }
+  
+  /* === Header móvil === */
+  .mobile-header {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #111a2b;
+    padding: 0 1rem;
+    z-index: 15;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .brand {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Mostrar header solo en móvil */
+  @media (max-width: 768px) {
+    .mobile-header {
+      display: flex;
+    }
+  }
+  
+  /* === Sidebar === */
   .sidebar {
-    transform: translateX(0);
+    width: 240px;
+    background: #111a2b;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+    transition: transform 0.3s ease;
   }
-}
-
-/* Móvil: oculta hasta que tenga .open */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
+  
+  /* Desktop: visible siempre */
+  @media (min-width: 769px) {
+    .sidebar {
+      transform: translateX(0);
+    }
   }
-  .sidebar.open {
-    transform: translateX(0);
+  
+  /* Móvil: oculto por defecto */
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      padding-top: 4rem; /* espacio debajo del header */
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
   }
-}
-
-/* === Botón del menú === */
-.menu-btn {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  background: #ff6b6b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  z-index: 20;
-  font-size: 1.2rem;
-  display: none;
-}
-
-/* Solo visible en pantallas pequeñas */
-@media (max-width: 768px) {
+  
+  /* === Botón hamburguesa === */
   .menu-btn {
-    display: block;
+    width: 30px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 20;
   }
-}
-
-/* === Contenido principal === */
-.content {
-  flex: 1;
-  margin-left: 240px;
-  padding: 2rem;
-  transition: margin-left 0.3s ease;
-  width: 100%;
-}
-
-/* En móviles ocupa toda la pantalla */
-@media (max-width: 768px) {
+  
+  .menu-btn span {
+    height: 3px;
+    width: 100%;
+    background: #ff6b6b;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+  
+  /* Animación al abrir */
+  .menu-btn.open span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+  .menu-btn.open span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-btn.open span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+  
+  /* === Contenido === */
   .content {
-    margin-left: 0;
-    padding: 1rem;
+    flex: 1;
+    margin-left: 240px;
+    padding: 2rem;
+    transition: margin-left 0.3s ease;
+    width: 100%;
   }
-}
-
-/* === Links del sidebar === */
-.logo {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar nav a {
-  /* color: #94a3b8; */
-  text-decoration: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-}
-
-.sidebar nav a:hover {
-  background: rgba(223, 33, 33, 0.05);
-  color: #ff6b6b;
-}
-
-.sidebar nav a.router-link-active {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ff0000;
-}
-</style>
+  
+  @media (max-width: 768px) {
+    .content {
+      margin-left: 0;
+      padding-top: 70px; /* espacio para el header móvil */
+    }
+  }
+  
+  /* === Sidebar links === */
+  .logo {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #ff6b6b;
+  }
+  
+  .sidebar nav {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .sidebar nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+  }
+  
+  .sidebar nav a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ff6b6b;
+  }
+  
+  .sidebar nav a.router-link-active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ff6b6b;
+  }
+  </style>
+  
