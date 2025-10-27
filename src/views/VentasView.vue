@@ -91,10 +91,10 @@ async function addQuickSale(p) {
   }
 }
 onMounted(async () => {
-   loading.value=true;
-  const res = await axios.get("/api/sales/today");
-  totalHoy.value = Number(res.data.total || 0);
-  loading.value=false;
+//    loading.value=true;
+//   const res = await axios.get("/api/sales/today");
+//   totalHoy.value = Number(res.data.total || 0);
+//   loading.value=false;
 
 });
 const form = ref({
@@ -220,7 +220,7 @@ async function removeOneProduct(id)
 }
 onMounted(() => {
   fetchProducts();
-  fetchDashboard();
+//   fetchDashboard();
 });
 </script>
   
