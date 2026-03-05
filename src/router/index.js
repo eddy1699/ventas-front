@@ -6,6 +6,8 @@ import Products from "@/pages/Products.vue";
 import Sales from "@/pages/Sales.vue";
 import Receipts from "@/pages/Receipts.vue";
 import Settings from "@/pages/Settings.vue";
+import Tables from "@/pages/Tables.vue";
+import Comanda from "@/pages/Comanda.vue";
 
 const routes = [
   { path: "/login", name: "login", component: Login },
@@ -15,6 +17,8 @@ const routes = [
     children: [
       { path: "", name: "dashboard", component: Dashboard },
       { path: "products", name: "products", component: Products },
+      { path: "tables", name: "tables", component: Tables },
+      { path: "tables/:tableId", name: "comanda", component: Comanda },
       { path: "sales", name: "sales", component: Sales },
       { path: "receipts", name: "receipts", component: Receipts },
       { path: "settings", name: "settings", component: Settings },

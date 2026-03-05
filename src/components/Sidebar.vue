@@ -24,6 +24,7 @@
 const items = [
   { name: "dashboard", label: "Dashboard", to: "/", icon: "📊" },
   { name: "products", label: "Productos", to: "/products", icon: "📦" },
+  { name: "tables", label: "Mesas", to: "/tables", icon: "🪑" },
   { name: "sales", label: "Ventas", to: "/sales", icon: "🛒" },
   { name: "receipts", label: "Boletas", to: "/receipts", icon: "🧾" },
   { name: "settings", label: "Configuración", to: "/settings", icon: "⚙️" },

@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  // baseURL: "http://localhost:18715/api",
-  baseURL: "https://ventas-back-bul4.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 api.interceptors.request.use((config) => {
@@ -12,4 +11,3 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
-
