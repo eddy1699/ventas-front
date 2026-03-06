@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''version''\\)\\); print\\(list\\(d.get\\(''exports'',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(node -e \"const fs = require\\(''fs''\\); const lock = JSON.parse\\(fs.readFileSync\\(''/Users/edgardosamame/Desktop/Projects/comanda/ventas-front/package-lock.json''\\)\\); const e = lock.packages[''node_modules/entities'']; console.log\\(''version:'', e.version\\); console.log\\(''integrity:'', e.integrity\\); console.log\\(''resolved:'', e.resolved\\);\")"
+    ]
+  }
+}
