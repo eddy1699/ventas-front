@@ -23,9 +23,16 @@
             required
             class="w-full px-3 py-2 border rounded-md bg-background"
           >
+            <option value="cóctel">Cóctel</option>
+            <option value="limonada">Limonada</option>
+            <option value="frappe">Frappe</option>
+            <option value="jugo">Jugo</option>
+            <option value="gaseosa">Gaseosa</option>
+            <option value="cerveza">Cerveza</option>
+            <option value="caliente">Caliente</option>
+            <option value="hamburguesa">Hamburguesa</option>
             <option value="plato">Plato</option>
-            <option value="bebida">Bebida</option>
-            <option value="combo">Combo</option>
+            <option value="postre">Postre</option>
           </select>
         </div>
 
