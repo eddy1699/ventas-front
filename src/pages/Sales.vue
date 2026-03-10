@@ -1,131 +1,120 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-6rem)]">
-    <!-- Lista de productos -->
-    <div class="lg:col-span-2 flex flex-col bg-card rounded-xl border border-border overflow-hidden">
-      <div class="p-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">Seleccionar productos</h2>
-        <input
-          v-model="search"
-          placeholder="Buscar..."
-          class="px-3 py-1 rounded-md border border-border bg-background text-xs"
-        />
-      </div>
-
-      <!-- Productos -->
-      <div class="flex-1 overflow-y-auto p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-        <button
-          v-for="p in filteredProducts"
-          :key="p.id"
-          @click="addToCart(p)"
-          class="bg-background rounded-lg border border-border p-3 text-left hover:border-primary transition flex flex-col items-center"
-        >
-          <img
-            v-if="p.image"
-            :src="p.image"
-            alt="Producto"
-            class="w-20 h-20 object-cover rounded-md border border-border mb-2"
-          />
-          <div
-            v-else
-            class="w-20 h-20 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-400 border border-border mb-2"
-          >
-            Sin imagen
-          </div>
-          <p class="font-medium text-sm text-center truncate">{{ p.name }}</p>
-          <p class="text-xs text-foreground/50 text-center">{{ p.category || '---' }}</p>
-          <p class="text-sm font-semibold mt-2 text-center">S/ {{ p.price }}</p>
-        </button>
-      </div>
+  <!-- Mobile: tab switcher -->
+  <div class="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]">
+    <!-- Tab bar (mobile only) -->
+    <div class="flex md:hidden border-b border-border mb-0">
+      <button
+        @click="activeTab = 'products'"
+        class="flex-1 py-2 text-sm font-medium transition"
+        :class="activeTab === 'products' ? 'border-b-2 border-primary text-primary' : 'text-foreground/50'"
+      >Productos</button>
+      <button
+        @click="activeTab = 'cart'"
+        class="flex-1 py-2 text-sm font-medium transition relative"
+        :class="activeTab === 'cart' ? 'border-b-2 border-primary text-primary' : 'text-foreground/50'"
+      >
+        Carrito
+        <span v-if="cart.length" class="ml-1 bg-primary text-white text-[10px] rounded-full px-1.5 py-0.5">{{ cart.length }}</span>
+      </button>
     </div>
 
-    <!-- Carrito -->
-    <div class="bg-card rounded-xl border border-border flex flex-col">
-      <div class="p-4 border-b border-border flex items-center justify-between">
-        <h2 class="text-lg font-semibold">Carrito</h2>
-        <span class="text-xs text-foreground/60">{{ cart.length }} items</span>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div v-for="item in cart" :key="item.id" class="flex items-center justify-between gap-2">
-          <div>
-            <p class="text-sm font-medium">{{ item.name }}</p>
-            <p class="text-xs text-foreground/50">
-              S/ {{ item.price }} x {{ item.quantity }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              v-model.number="item.quantity"
-              @change="updateTotals"
-              class="w-14 px-2 py-1 rounded-md border border-border bg-background text-xs"
-            />
-            <p class="w-16 text-right text-sm font-semibold">
-              S/ {{ (item.price * item.quantity).toFixed(2) }}
-            </p>
-            <button @click="removeFromCart(item)" class="text-red-500 text-sm">✕</button>
-          </div>
+    <!-- Desktop: side by side | Mobile: tabs -->
+    <div class="flex-1 flex gap-4 overflow-hidden">
+      <!-- Productos panel -->
+      <div
+        class="flex flex-col bg-card rounded-xl border border-border overflow-hidden"
+        :class="activeTab === 'products' ? 'flex' : 'hidden md:flex'"
+        style="flex: 2"
+      >
+        <div class="p-4 flex items-center justify-between border-b border-border shrink-0">
+          <h2 class="text-base font-semibold">Productos</h2>
+          <input
+            v-model="search"
+            placeholder="Buscar..."
+            class="px-3 py-1 rounded-md border border-border bg-background text-xs w-32"
+          />
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+          <button
+            v-for="p in filteredProducts"
+            :key="p.id"
+            @click="addToCart(p)"
+            class="bg-background rounded-xl border border-border p-3 text-left hover:border-primary transition flex flex-col items-center gap-1"
+          >
+            <div class="w-16 h-16 rounded-lg bg-card flex items-center justify-center overflow-hidden">
+              <img v-if="p.image" :src="p.image" class="w-full h-full object-cover" alt="" />
+              <span v-else class="text-4xl">{{ categoryEmoji(p.category) }}</span>
+            </div>
+            <p class="font-medium text-xs text-center leading-tight truncate w-full">{{ p.name }}</p>
+            <p class="text-xs font-semibold text-primary">S/ {{ p.price }}</p>
+          </button>
         </div>
       </div>
 
-      <!-- Total -->
-      <div class="p-4 border-t border-border space-y-2">
-        <div class="flex items-center justify-between text-sm">
-          <span>Total:</span>
-          <span class="text-lg font-bold">S/ {{ total.toFixed(2) }}</span>
+      <!-- Carrito panel -->
+      <div
+        class="flex flex-col bg-card rounded-xl border border-border overflow-hidden"
+        :class="activeTab === 'cart' ? 'flex' : 'hidden md:flex'"
+        style="flex: 1; min-width: 0"
+      >
+        <div class="p-4 border-b border-border flex items-center justify-between shrink-0">
+          <h2 class="text-base font-semibold">Carrito</h2>
+          <span class="text-xs text-foreground/60">{{ cart.length }} items</span>
         </div>
-        <button
-          @click="confirmSale"
-          :disabled="loading || !cart.length"
-          class="w-full py-2 rounded-md bg-primary text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {{ loading ? "Guardando..." : "Confirmar venta" }}
-        </button>
+
+        <div class="flex-1 overflow-y-auto p-3 space-y-3">
+          <div v-if="!cart.length" class="flex items-center justify-center h-full text-sm text-foreground/40">
+            Agrega productos
+          </div>
+          <div v-for="item in cart" :key="item.id" class="flex items-center justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">{{ item.name }}</p>
+              <p class="text-xs text-foreground/50">S/ {{ item.price }}</p>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button @click="item.quantity > 1 ? (item.quantity--, updateTotals()) : removeFromCart(item)" class="w-6 h-6 rounded border border-border text-sm flex items-center justify-center hover:bg-background/70">−</button>
+              <span class="w-6 text-center text-sm font-medium">{{ item.quantity }}</span>
+              <button @click="item.quantity++; updateTotals()" class="w-6 h-6 rounded border border-border text-sm flex items-center justify-center hover:bg-background/70">+</button>
+              <span class="w-14 text-right text-sm font-semibold">S/ {{ (item.price * item.quantity).toFixed(2) }}</span>
+              <button @click="removeFromCart(item)" class="text-red-400 text-sm ml-1">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-border space-y-2 shrink-0">
+          <div class="flex items-center justify-between text-sm">
+            <span>Total:</span>
+            <span class="text-lg font-bold">S/ {{ total.toFixed(2) }}</span>
+          </div>
+          <button
+            @click="confirmSale"
+            :disabled="loading || !cart.length"
+            class="w-full py-2.5 rounded-lg bg-primary text-white font-semibold hover:opacity-90 disabled:opacity-50 text-sm transition"
+          >
+            {{ loading ? "Guardando..." : "Confirmar venta" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal de datos del cliente -->
-  <div
-    v-if="showReceiptModal"
-    class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
-  >
+  <!-- Modal boleta -->
+  <div v-if="showReceiptModal" class="fixed inset-0 bg-black/30 flex items-end sm:items-center justify-center z-50 p-4">
     <div class="w-full max-w-md bg-background rounded-xl border border-border p-6">
       <h2 class="text-lg font-semibold mb-4">Generar boleta</h2>
       <form @submit.prevent="generateReceipt" class="space-y-3">
         <input type="hidden" v-model="receiptForm.saleId" />
-
         <div>
           <label class="text-xs block mb-1">Cliente</label>
-          <input
-            v-model="receiptForm.client_name"
-            placeholder="Nombre del cliente"
-            class="w-full px-3 py-2 rounded-md border border-border bg-background"
-            required
-          />
+          <input v-model="receiptForm.client_name" placeholder="Nombre del cliente" class="w-full px-3 py-2 rounded-md border border-border bg-background" required />
         </div>
-
         <div>
           <label class="text-xs block mb-1">Documento</label>
-          <input
-            v-model="receiptForm.client_doc"
-            placeholder="DNI / RUC (opcional)"
-            class="w-full px-3 py-2 rounded-md border border-border bg-background"
-          />
+          <input v-model="receiptForm.client_doc" placeholder="DNI / RUC (opcional)" class="w-full px-3 py-2 rounded-md border border-border bg-background" />
         </div>
-
         <div class="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            @click="showReceiptModal = false"
-            class="px-4 py-2 rounded-md border border-border text-sm"
-          >
-            Cancelar
-          </button>
-          <button class="px-4 py-2 rounded-md bg-primary text-white text-sm">
-            Generar
-          </button>
+          <button type="button" @click="showReceiptModal = false" class="px-4 py-2 rounded-md border border-border text-sm">Cancelar</button>
+          <button class="px-4 py-2 rounded-md bg-primary text-white text-sm">Generar</button>
         </div>
       </form>
     </div>
@@ -136,19 +125,17 @@
 import { ref, computed, onMounted } from "vue";
 import api from "@/api/axios";
 import Swal from "sweetalert2";
+import { categoryEmoji } from "@/utils/categoryEmoji.js";
 
+const activeTab = ref("products");
 const products = ref([]);
 const cart = ref([]);
 const search = ref("");
 const loading = ref(false);
 const total = ref(0);
 const saleId = ref(null);
-
 const showReceiptModal = ref(false);
-const receiptForm = ref({
-  client_name: "",
-  client_doc: "",
-});
+const receiptForm = ref({ client_name: "", client_doc: "" });
 
 const fetchProducts = async () => {
   const { data } = await api.get("/products");
@@ -156,9 +143,9 @@ const fetchProducts = async () => {
 };
 
 const filteredProducts = computed(() => {
-  if (!search.value) return products.value;
-  return products.value.filter((p) =>
-    p.name.toLowerCase().includes(search.value.toLowerCase())
+  const q = search.value.toLowerCase();
+  return products.value.filter(
+    (p) => p.status === 1 && (!q || p.name.toLowerCase().includes(q))
   );
 });
 
@@ -174,6 +161,7 @@ const addToCart = (product) => {
       quantity: 1,
     });
   updateTotals();
+  activeTab.value = "cart";
 };
 
 const removeFromCart = (item) => {
@@ -198,28 +186,23 @@ const confirmSale = async () => {
     receiptForm.value.saleId = data.saleId;
     loading.value = false;
 
-    // 🔹 Mostrar opciones
     Swal.fire({
-      title: "✅ Venta registrada",
+      title: "Venta registrada",
       text: `Total S/ ${data.total}`,
       icon: "success",
       showDenyButton: true,
-      // showCancelButton: true,
       confirmButtonText: "Generar boleta manual",
-      denyButtonText: "Boleta automática y guardar",
-      // cancelButtonText: "Solo guardar",
+      denyButtonText: "Boleta automática",
       reverseButtons: true,
     }).then(async (result) => {
       if (result.isConfirmed) {
         showReceiptModal.value = true;
       } else if (result.isDenied) {
-        // Boleta automática
         await api.post("/receipts", {
           sale_id: data.saleId,
           client_name: "Cliente General",
           client_doc: "-",
         });
-        // Swal.fire("📄 Boleta automática", "Boleta generada correctamente", "success");
         cart.value = [];
         updateTotals();
       } else {
@@ -235,20 +218,18 @@ const confirmSale = async () => {
 
 const generateReceipt = async () => {
   try {
-    const payload = {
+    const { data } = await api.post("/receipts", {
       sale_id: receiptForm.value.saleId,
       client_name: receiptForm.value.client_name,
       client_doc: receiptForm.value.client_doc || "-",
-    };
-
-    await api.post("/receipts", payload);
-    Swal.fire("✅ Boleta generada", "Boleta creada correctamente", "success");
+    });
     showReceiptModal.value = false;
     cart.value = [];
     updateTotals();
+    if (data.pdf_url) window.open(data.pdf_url, "_blank");
+    Swal.fire("Boleta generada", "PDF disponible en boletas", "success");
   } catch (error) {
-    console.error("❌ Error generando boleta:", error);
-    Swal.fire("Error", "No se pudo generar la boleta correctamente", "error");
+    Swal.fire("Error", "No se pudo generar la boleta", "error");
   }
 };
 

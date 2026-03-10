@@ -1,119 +1,133 @@
 <template>
-  <div class="flex h-[calc(100vh-64px)]">
+  <div class="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-64px)]">
 
-    <!-- Panel izquierdo: productos -->
-    <div class="flex-1 flex flex-col border-r border-border overflow-hidden">
-      <!-- Header mesa -->
-      <div class="px-4 py-3 border-b border-border flex items-center gap-3">
-        <button @click="$router.push('/tables')" class="text-foreground/50 hover:text-foreground transition">
-          ← Mesas
-        </button>
-        <div class="font-semibold">
-          Mesa {{ table?.number }}
-          <span v-if="table?.name" class="text-foreground/50 font-normal text-sm"> · {{ table.name }}</span>
-        </div>
-        <span
-          class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full"
-          :class="comanda ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'"
-        >
-          {{ comanda ? "Ocupada" : "Disponible" }}
-        </span>
+    <!-- Header mesa -->
+    <div class="px-4 py-3 border-b border-border flex items-center gap-3 shrink-0">
+      <button @click="$router.push('/tables')" class="text-foreground/50 hover:text-foreground transition text-sm">
+        ← Mesas
+      </button>
+      <div class="font-semibold text-sm">
+        Mesa {{ table?.number }}
+        <span v-if="table?.name" class="text-foreground/50 font-normal"> · {{ table.name }}</span>
       </div>
-
-      <!-- Buscador -->
-      <div class="px-4 py-2 border-b border-border">
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Buscar producto..."
-          class="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-      </div>
-
-      <!-- Grid de productos -->
-      <div class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start">
-        <button
-          v-for="p in filteredProducts"
-          :key="p.id"
-          @click="addItem(p)"
-          :disabled="addingId === p.id"
-          class="flex flex-col items-start gap-1 p-3 rounded-xl border border-border bg-card hover:border-primary hover:bg-primary/5 transition text-left disabled:opacity-50"
-        >
-          <img v-if="p.image" :src="p.image" class="w-full h-20 object-cover rounded-lg mb-1" />
-          <div v-else class="w-full h-20 bg-background rounded-lg flex items-center justify-center text-2xl mb-1">🍽️</div>
-          <span class="text-xs font-medium leading-tight">{{ p.name }}</span>
-          <span class="text-xs text-primary font-semibold">S/ {{ Number(p.price).toFixed(2) }}</span>
-        </button>
-      </div>
+      <span
+        class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full"
+        :class="comanda ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'"
+      >
+        {{ comanda ? "Ocupada" : "Libre" }}
+      </span>
     </div>
 
-    <!-- Panel derecho: comanda -->
-    <div class="w-80 flex flex-col bg-card">
-      <!-- Header comanda -->
-      <div class="px-4 py-3 border-b border-border font-semibold text-sm">
+    <!-- Mobile: tab bar -->
+    <div class="flex md:hidden border-b border-border shrink-0">
+      <button
+        @click="activeTab = 'products'"
+        class="flex-1 py-2 text-sm font-medium transition"
+        :class="activeTab === 'products' ? 'border-b-2 border-primary text-primary' : 'text-foreground/50'"
+      >Productos</button>
+      <button
+        @click="activeTab = 'comanda'"
+        class="flex-1 py-2 text-sm font-medium transition relative"
+        :class="activeTab === 'comanda' ? 'border-b-2 border-primary text-primary' : 'text-foreground/50'"
+      >
         Comanda
-      </div>
+        <span v-if="activeItems.length" class="ml-1 bg-primary text-white text-[10px] rounded-full px-1.5 py-0.5">{{ activeItems.length }}</span>
+      </button>
+    </div>
 
-      <!-- Sin comanda abierta -->
-      <div v-if="!comanda" class="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
-        <div class="text-4xl">🪑</div>
-        <p class="text-sm text-foreground/50">Mesa disponible. Agrega un producto para abrir la comanda.</p>
-      </div>
+    <!-- Content: desktop side-by-side, mobile tabs -->
+    <div class="flex-1 flex overflow-hidden min-h-0">
 
-      <!-- Lista de ítems -->
-      <div v-else class="flex-1 overflow-y-auto divide-y divide-border">
-        <div
-          v-for="item in activeItems"
-          :key="item.id"
-          class="px-3 py-3 space-y-1"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex-1 text-sm font-medium leading-tight">{{ item.product.name }}</div>
-            <button
-              @click="removeItem(item)"
-              class="text-red-400 hover:text-red-600 text-xs mt-0.5 transition"
-            >✕</button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <!-- Cantidad -->
-            <div class="flex items-center gap-1 border border-border rounded-lg">
-              <button @click="changeQty(item, -1)" class="px-2 py-0.5 text-sm hover:bg-background/70 rounded-l-lg transition">−</button>
-              <span class="px-2 text-sm font-medium min-w-[24px] text-center">{{ item.quantity }}</span>
-              <button @click="changeQty(item, 1)" class="px-2 py-0.5 text-sm hover:bg-background/70 rounded-r-lg transition">+</button>
-            </div>
-            <span class="text-xs text-foreground/60 ml-auto">S/ {{ Number(item.subtotal).toFixed(2) }}</span>
-          </div>
-
-          <!-- Nota -->
+      <!-- Panel izquierdo: productos -->
+      <div
+        class="flex flex-col border-r border-border overflow-hidden"
+        :class="activeTab === 'products' ? 'flex' : 'hidden md:flex'"
+        style="flex: 1"
+      >
+        <!-- Buscador -->
+        <div class="px-3 py-2 border-b border-border shrink-0">
           <input
-            v-model="item._note"
-            @blur="updateNote(item)"
+            v-model="search"
             type="text"
-            placeholder="Nota (sin cebolla...)"
-            class="w-full text-xs border border-border/50 rounded px-2 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary/50"
+            placeholder="Buscar producto..."
+            class="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
-        <div v-if="!activeItems.length" class="p-4 text-center text-sm text-foreground/40">
-          La comanda está vacía
+        <!-- Grid de productos -->
+        <div class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start">
+          <button
+            v-for="p in filteredProducts"
+            :key="p.id"
+            @click="addItem(p)"
+            :disabled="addingId === p.id"
+            class="flex flex-col items-start gap-1 p-3 rounded-xl border border-border bg-card hover:border-primary hover:bg-primary/5 transition text-left disabled:opacity-50"
+          >
+            <div class="w-full h-16 bg-background rounded-lg flex items-center justify-center overflow-hidden mb-1">
+              <img v-if="p.image" :src="p.image" class="w-full h-full object-cover" alt="" />
+              <span v-else class="text-3xl">{{ categoryEmoji(p.category) }}</span>
+            </div>
+            <span class="text-xs font-medium leading-tight">{{ p.name }}</span>
+            <span class="text-xs text-primary font-semibold">S/ {{ Number(p.price).toFixed(2) }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- Footer total + cerrar -->
-      <div class="border-t border-border p-4 space-y-3">
-        <div class="flex justify-between items-center font-semibold">
-          <span class="text-sm">Total</span>
-          <span class="text-lg">S/ {{ total.toFixed(2) }}</span>
+      <!-- Panel derecho: comanda -->
+      <div
+        class="flex flex-col bg-card overflow-hidden"
+        :class="activeTab === 'comanda' ? 'flex' : 'hidden md:flex'"
+        style="width: 100%; max-width: 320px; flex-shrink: 0"
+      >
+        <!-- Sin comanda -->
+        <div v-if="!comanda" class="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
+          <div class="text-4xl">🪑</div>
+          <p class="text-sm text-foreground/50">Mesa libre. Agrega un producto para abrir la comanda.</p>
         </div>
-        <button
-          v-if="comanda && activeItems.length"
-          @click="closeMesa"
-          :disabled="closing"
-          class="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
-        >
-          {{ closing ? "Cerrando..." : "Cerrar Mesa" }}
-        </button>
+
+        <!-- Ítems -->
+        <div v-else class="flex-1 overflow-y-auto divide-y divide-border">
+          <div v-for="item in activeItems" :key="item.id" class="px-3 py-3 space-y-1">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1 text-sm font-medium leading-tight">{{ item.product.name }}</div>
+              <button type="button" @click="removeItem(item)" class="w-7 h-7 flex items-center justify-center rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition text-sm">✕</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1 border border-border rounded-lg">
+                <button @click="changeQty(item, -1)" class="px-2 py-0.5 text-sm hover:bg-background/70 rounded-l-lg transition">−</button>
+                <span class="px-2 text-sm font-medium min-w-[24px] text-center">{{ item.quantity }}</span>
+                <button @click="changeQty(item, 1)" class="px-2 py-0.5 text-sm hover:bg-background/70 rounded-r-lg transition">+</button>
+              </div>
+              <span class="text-xs text-foreground/60 ml-auto">S/ {{ Number(item.subtotal).toFixed(2) }}</span>
+            </div>
+            <input
+              v-model="item._note"
+              @blur="updateNote(item)"
+              type="text"
+              placeholder="Nota (sin cebolla...)"
+              class="w-full text-xs border border-border/50 rounded px-2 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary/50"
+            />
+          </div>
+          <div v-if="!activeItems.length" class="p-4 text-center text-sm text-foreground/40">
+            La comanda está vacía
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="border-t border-border p-4 space-y-3 shrink-0">
+          <div class="flex justify-between items-center font-semibold">
+            <span class="text-sm">Total</span>
+            <span class="text-lg">S/ {{ total.toFixed(2) }}</span>
+          </div>
+          <button
+            v-if="comanda && activeItems.length"
+            @click="closeMesa"
+            :disabled="closing"
+            class="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
+          >
+            {{ closing ? "Cerrando..." : "Cerrar Mesa" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -123,11 +137,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "@/api/axios";
+import { categoryEmoji } from "@/utils/categoryEmoji.js";
 import Swal from "sweetalert2";
 
 const route = useRoute();
 const router = useRouter();
 const tableId = route.params.tableId;
+const activeTab = ref("products");
 
 const table = ref(null);
 const comanda = ref(null);
@@ -181,6 +197,7 @@ async function addItem(product) {
       notes: null,
     });
     comanda.value.comanda_items.push(item);
+    activeTab.value = "comanda";
   } catch (e) {
     Swal.fire("Error", e.response?.data?.error || "Error agregando ítem", "error");
   } finally {
@@ -225,7 +242,6 @@ async function removeItem(item) {
 }
 
 async function closeMesa() {
-  // Paso 1: método de pago
   const { value: payMethod, isDismissed: d1 } = await Swal.fire({
     title: "¿Cómo pagó el cliente?",
     icon: "question",
@@ -243,7 +259,6 @@ async function closeMesa() {
   else if (payMethod === false) payment_method = "tarjeta";
   else payment_method = "otro";
 
-  // Paso 2: ¿generar boleta?
   const { isConfirmed: wantReceipt, isDismissed: d2 } = await Swal.fire({
     title: "¿Generar boleta?",
     icon: "question",

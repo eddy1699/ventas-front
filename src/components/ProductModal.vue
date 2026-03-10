@@ -49,15 +49,18 @@
           />
         </div>
 
-        <!-- 🖼️ Imagen -->
         <div>
-          <label class="text-xs mb-1 block">Imagen</label>
-          <input type="file" @change="handleFileUpload" accept="image/*" class="text-xs" />
-          <div v-if="preview" class="mt-2">
-            <img
-              :src="preview"
-              alt="Vista previa"
-              class="w-32 h-32 object-cover rounded-md border border-border"
+          <label class="text-xs mb-1 block">Imagen (opcional)</label>
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-lg border border-border bg-background flex items-center justify-center overflow-hidden shrink-0">
+              <img v-if="preview" :src="preview" class="w-full h-full object-cover" alt="preview" />
+              <span v-else class="text-2xl">📷</span>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              @change="handleFileUpload"
+              class="text-xs text-foreground/70 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
             />
           </div>
         </div>
@@ -153,7 +156,7 @@ const saveProduct = async () => {
     emit("close");
   } catch (err) {
     console.error("❌ Error guardando producto:", err);
-    alert("No se pudo guardar el producto");
+    alert(err.response?.data?.error || "No se pudo guardar el producto");
   }
 };
 </script>

@@ -1,12 +1,15 @@
 <template>
-  <header class="h-14 border-b border-border flex items-center justify-between px-4 bg-background/60 backdrop-blur">
-    <div class="text-sm text-foreground/60">
+  <header class="h-14 border-b border-border flex items-center justify-between px-4 bg-background/60 backdrop-blur shrink-0">
+    <div class="md:hidden font-semibold text-base tracking-tight">
+      Ventas<span class="text-primary">Diarias</span>
+    </div>
+    <div class="hidden md:block text-sm text-foreground/60">
       Hola, <span class="font-semibold">{{ user?.name || 'Usuario' }}</span>
     </div>
     <div class="flex items-center gap-3">
       <ThemeToggle />
       <button @click="logout" class="text-xs px-3 py-1 rounded-md border border-border hover:bg-card transition">
-        Cerrar sesión
+        Salir
       </button>
     </div>
   </header>
@@ -21,4 +24,3 @@ const logout = () => {
   window.location.href = "/login";
 };
 </script>
-
