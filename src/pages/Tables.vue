@@ -1,63 +1,57 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="space-y-4">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Mesas</h1>
-        <p class="text-sm text-foreground/50">Gestión de mesas del local</p>
+        <h1 class="text-xl font-bold">Mesas</h1>
+        <p class="text-xs text-foreground/50 mt-0.5">Gestión de mesas del local</p>
       </div>
       <button
         @click="openModal(null)"
-        class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition"
+        class="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition"
       >
         + Nueva Mesa
       </button>
     </div>
 
-    <!-- Leyenda de estados -->
+    <!-- Leyenda -->
     <div class="flex gap-4 text-xs text-foreground/60">
-      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500"></span> Disponible</span>
-      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span> Ocupada</span>
-      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Reservada</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Disponible</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Ocupada</span>
+      <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> Reservada</span>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       <div v-for="i in 6" :key="i" class="rounded-xl border-2 border-border p-4 animate-pulse space-y-2">
-        <div class="h-8 bg-border rounded w-1/2"></div>
+        <div class="h-10 bg-border rounded w-1/2"></div>
         <div class="h-3 bg-border rounded w-2/3"></div>
         <div class="h-5 bg-border rounded-full w-1/2 mt-2"></div>
       </div>
     </div>
 
     <!-- Grid de mesas -->
-    <div v-if="!loading && tables.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div v-if="!loading && tables.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       <div
         v-for="table in tables"
         :key="table.id"
         @click="goToTable(table)"
-        class="relative rounded-xl border-2 p-4 cursor-pointer transition hover:scale-105 select-none"
+        class="relative rounded-xl border-2 p-4 cursor-pointer transition active:scale-95 select-none"
         :class="tableCardClass(table.status)"
       >
-        <!-- Botón editar -->
         <button
           @click.stop="openModal(table)"
-          class="absolute top-2 right-2 text-foreground/30 hover:text-foreground/70 transition text-base"
-          title="Editar mesa"
+          class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-foreground/30 hover:text-foreground/70 transition rounded-lg hover:bg-black/5"
         >✏️</button>
 
-        <div class="text-3xl font-bold mb-1">{{ table.number }}</div>
-        <div v-if="table.name" class="text-xs font-medium truncate mb-2">{{ table.name }}</div>
+        <div class="text-4xl font-bold mb-1">{{ table.number }}</div>
+        <div v-if="table.name" class="text-xs font-medium truncate mb-1">{{ table.name }}</div>
         <div class="text-xs text-foreground/60 mb-2">{{ table.capacity }} personas</div>
 
-        <span
-          class="text-xs font-semibold px-2 py-0.5 rounded-full"
-          :class="tableBadgeClass(table.status)"
-        >
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full" :class="tableBadgeClass(table.status)">
           {{ table.status }}
         </span>
 
-        <!-- Total comanda si está ocupada -->
         <div v-if="table.status === 'ocupada' && comandaTotals[table.id]" class="mt-2 text-sm font-bold">
           S/ {{ comandaTotals[table.id].toFixed(2) }}
         </div>
@@ -69,7 +63,6 @@
       <p class="text-sm">No hay mesas registradas. Crea la primera.</p>
     </div>
 
-    <!-- Modal crear/editar -->
     <TableModal
       v-if="showModal"
       :table="editingTable"
@@ -99,20 +92,16 @@ async function fetchTables() {
   try {
     const { data } = await api.get("/tables");
     tables.value = data;
-
-  // Cargar totales de mesas ocupadas
-  const ocupadas = data.filter((t) => t.status === "ocupada");
-  for (const t of ocupadas) {
-    try {
-      const { data: comanda } = await api.get(`/comandas/table/${t.id}`);
-      if (comanda?.comanda_items) {
-        const total = comanda.comanda_items.reduce((acc, i) => acc + Number(i.subtotal), 0);
-        comandaTotals.value[t.id] = total;
-      }
-    } catch {
-      // si falla, ignorar
+    const ocupadas = data.filter((t) => t.status === "ocupada");
+    for (const t of ocupadas) {
+      try {
+        const { data: comanda } = await api.get(`/comandas/table/${t.id}`);
+        if (comanda?.comanda_items) {
+          const total = comanda.comanda_items.reduce((acc, i) => acc + Number(i.subtotal), 0);
+          comandaTotals.value[t.id] = total;
+        }
+      } catch { /* ignorar */ }
     }
-  }
   } finally {
     loading.value = false;
   }
@@ -130,17 +119,7 @@ function tableBadgeClass(status) {
   return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300";
 }
 
-function goToTable(table) {
-  router.push(`/tables/${table.id}`);
-}
-
-function openModal(table) {
-  editingTable.value = table;
-  showModal.value = true;
-}
-
-function onTableSaved() {
-  showModal.value = false;
-  fetchTables();
-}
+function goToTable(table) { router.push(`/tables/${table.id}`); }
+function openModal(table) { editingTable.value = table; showModal.value = true; }
+function onTableSaved() { showModal.value = false; fetchTables(); }
 </script>

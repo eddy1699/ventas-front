@@ -1,35 +1,38 @@
 <template>
-  <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div class="w-full max-w-sm bg-card border border-border rounded-xl p-6 shadow-xl">
-      <h2 class="text-lg font-bold mb-4">{{ table ? "Editar Mesa" : "Nueva Mesa" }}</h2>
+  <div class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+    <div class="w-full sm:max-w-sm bg-card sm:rounded-2xl rounded-t-2xl border border-border shadow-xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold">{{ table ? "Editar Mesa" : "Nueva Mesa" }}</h2>
+        <button @click="$emit('close')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background/60 text-foreground/50 transition">✕</button>
+      </div>
 
-      <div class="space-y-3">
+      <div class="space-y-4">
         <div>
-          <label class="text-xs text-foreground/60 mb-1 block">Nombre (opcional)</label>
+          <label class="text-xs font-medium text-foreground/60 mb-1.5 block">Nombre (opcional)</label>
           <input
             v-model="form.name"
             type="text"
             placeholder="Ej: Terraza, VIP, Interior..."
-            class="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            class="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         <div>
-          <label class="text-xs text-foreground/60 mb-1 block">Capacidad (personas)</label>
+          <label class="text-xs font-medium text-foreground/60 mb-1.5 block">Capacidad (personas)</label>
           <input
             v-model.number="form.capacity"
             type="number"
             min="1"
             placeholder="4"
-            class="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            class="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         <div v-if="table">
-          <label class="text-xs text-foreground/60 mb-1 block">Estado</label>
+          <label class="text-xs font-medium text-foreground/60 mb-1.5 block">Estado</label>
           <select
             v-model="form.status"
-            class="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            class="w-full border border-border rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <option value="disponible">Disponible</option>
             <option value="ocupada">Ocupada</option>
@@ -38,17 +41,17 @@
         </div>
       </div>
 
-      <div class="flex gap-3 mt-5">
+      <div class="flex gap-3 pt-1">
         <button
           @click="$emit('close')"
-          class="flex-1 border border-border rounded-lg py-2 text-sm hover:bg-background/70 transition"
+          class="flex-1 border border-border rounded-xl py-3 text-sm font-medium hover:bg-background/70 transition"
         >
           Cancelar
         </button>
         <button
           @click="save"
           :disabled="loading"
-          class="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
+          class="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
         >
           {{ loading ? "Guardando..." : (table ? "Guardar" : "Crear") }}
         </button>
