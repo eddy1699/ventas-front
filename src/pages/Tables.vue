@@ -21,8 +21,17 @@
       <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Reservada</span>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div v-for="i in 6" :key="i" class="rounded-xl border-2 border-border p-4 animate-pulse space-y-2">
+        <div class="h-8 bg-border rounded w-1/2"></div>
+        <div class="h-3 bg-border rounded w-2/3"></div>
+        <div class="h-5 bg-border rounded-full w-1/2 mt-2"></div>
+      </div>
+    </div>
+
     <!-- Grid de mesas -->
-    <div v-if="tables.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div v-if="!loading && tables.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       <div
         v-for="table in tables"
         :key="table.id"
@@ -55,7 +64,7 @@
       </div>
     </div>
 
-    <div v-else class="text-center py-16 text-foreground/40">
+    <div v-if="!loading && !tables.length" class="text-center py-16 text-foreground/40">
       <div class="text-5xl mb-3">🪑</div>
       <p class="text-sm">No hay mesas registradas. Crea la primera.</p>
     </div>
@@ -81,12 +90,15 @@ const tables = ref([]);
 const comandaTotals = ref({});
 const showModal = ref(false);
 const editingTable = ref(null);
+const loading = ref(false);
 
 onMounted(fetchTables);
 
 async function fetchTables() {
-  const { data } = await api.get("/tables");
-  tables.value = data;
+  loading.value = true;
+  try {
+    const { data } = await api.get("/tables");
+    tables.value = data;
 
   // Cargar totales de mesas ocupadas
   const ocupadas = data.filter((t) => t.status === "ocupada");
@@ -100,6 +112,9 @@ async function fetchTables() {
     } catch {
       // si falla, ignorar
     }
+  }
+  } finally {
+    loading.value = false;
   }
 }
 

@@ -54,8 +54,17 @@
           />
         </div>
 
+        <!-- Grid de productos: skeleton -->
+        <div v-if="loadingPage" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start">
+          <div v-for="i in 12" :key="i" class="rounded-xl border border-border bg-card p-3 animate-pulse space-y-2">
+            <div class="w-full h-16 bg-border rounded-lg"></div>
+            <div class="h-3 bg-border rounded w-3/4"></div>
+            <div class="h-3 bg-border rounded w-1/3"></div>
+          </div>
+        </div>
+
         <!-- Grid de productos -->
-        <div class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start">
+        <div v-else class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start">
           <button
             v-for="p in filteredProducts"
             :key="p.id"
@@ -121,7 +130,7 @@
           </div>
           <button
             v-if="comanda && activeItems.length"
-            @click="closeMesa"
+            @click="closeModal.show = true"
             :disabled="closing"
             class="w-full bg-primary text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition"
           >
@@ -131,15 +140,90 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal cerrar mesa -->
+  <div v-if="closeModal.show" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
+    <div class="w-full max-w-sm bg-card rounded-2xl border border-border shadow-xl p-6 space-y-4">
+      <h2 class="font-semibold text-base">Cerrar Mesa {{ table?.number }}</h2>
+
+      <!-- Método de pago -->
+      <div class="space-y-1.5">
+        <p class="text-xs font-medium text-foreground/60">Método de pago</p>
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            v-for="m in ['efectivo', 'tarjeta', 'otro']"
+            :key="m"
+            @click="closeModal.payment = m"
+            class="py-2 rounded-lg border text-sm font-medium capitalize transition"
+            :class="closeModal.payment === m
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border hover:bg-background/60'"
+          >{{ m }}</button>
+        </div>
+      </div>
+
+      <!-- Datos cliente -->
+      <div class="space-y-2">
+        <p class="text-xs font-medium text-foreground/60">Datos para la boleta <span class="font-normal">(opcional)</span></p>
+        <input
+          v-model="closeModal.client_name"
+          placeholder="Nombre del cliente"
+          class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        <input
+          v-model="closeModal.client_doc"
+          placeholder="DNI / RUC"
+          class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <!-- Total -->
+      <div class="flex justify-between items-center py-2 border-t border-border">
+        <span class="text-sm text-foreground/60">Total a cobrar</span>
+        <span class="font-bold text-lg">S/ {{ total.toFixed(2) }}</span>
+      </div>
+
+      <!-- Acciones -->
+      <div class="flex gap-2">
+        <button
+          @click="closeModal.show = false"
+          :disabled="closing"
+          class="flex-1 py-2 rounded-lg border border-border text-sm hover:bg-background/60 transition disabled:opacity-50"
+        >Cancelar</button>
+        <button
+          @click="confirmClose"
+          :disabled="closing || !closeModal.payment"
+          class="flex-1 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <svg v-if="closing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+          </svg>
+          {{ closing ? "Cerrando..." : "Cerrar mesa" }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal resultado boleta -->
+  <ReceiptResultModal
+    v-if="receiptResult"
+    :pdf-url="receiptResult.pdf_url"
+    :total="receiptResult.total"
+    :receipt-id="receiptResult.id"
+    @close="onReceiptClose"
+  />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "@/api/axios";
 import { categoryEmoji } from "@/utils/categoryEmoji.js";
-import Swal from "sweetalert2";
+import { useToast } from "@/composables/useToast";
+import ReceiptResultModal from "@/components/ReceiptResultModal.vue";
 
+const { error: toastError } = useToast();
 const route = useRoute();
 const router = useRouter();
 const tableId = route.params.tableId;
@@ -151,6 +235,15 @@ const products = ref([]);
 const search = ref("");
 const addingId = ref(null);
 const closing = ref(false);
+const loadingPage = ref(false);
+const receiptResult = ref(null);
+
+const closeModal = reactive({
+  show: false,
+  payment: "",
+  client_name: "",
+  client_doc: "",
+});
 
 const activeItems = computed(() =>
   (comanda.value?.comanda_items || [])
@@ -170,13 +263,18 @@ const total = computed(() =>
 );
 
 onMounted(async () => {
-  const [tablesRes, productsRes] = await Promise.all([
-    api.get("/tables"),
-    api.get("/products"),
-  ]);
-  table.value = tablesRes.data.find((t) => t.id == tableId);
-  products.value = productsRes.data;
-  await fetchComanda();
+  loadingPage.value = true;
+  try {
+    const [tablesRes, productsRes] = await Promise.all([
+      api.get("/tables"),
+      api.get("/products"),
+    ]);
+    table.value = tablesRes.data.find((t) => t.id == tableId);
+    products.value = productsRes.data;
+    await fetchComanda();
+  } finally {
+    loadingPage.value = false;
+  }
 });
 
 async function fetchComanda() {
@@ -199,7 +297,7 @@ async function addItem(product) {
     comanda.value.comanda_items.push(item);
     activeTab.value = "comanda";
   } catch (e) {
-    Swal.fire("Error", e.response?.data?.error || "Error agregando ítem", "error");
+    toastError(e.response?.data?.error || "Error agregando ítem");
   } finally {
     addingId.value = null;
   }
@@ -215,7 +313,7 @@ async function changeQty(item, delta) {
     });
     await fetchComanda();
   } catch (e) {
-    Swal.fire("Error", e.response?.data?.error || "Error actualizando ítem", "error");
+    toastError(e.response?.data?.error || "Error actualizando ítem");
   }
 }
 
@@ -237,83 +335,30 @@ async function removeItem(item) {
     await api.delete(`/comandas/${comanda.value.id}/items/${item.id}`);
     await fetchComanda();
   } catch (e) {
-    Swal.fire("Error", e.response?.data?.error || "Error eliminando ítem", "error");
+    toastError(e.response?.data?.error || "Error eliminando ítem");
   }
 }
 
-async function closeMesa() {
-  const { value: payMethod, isDismissed: d1 } = await Swal.fire({
-    title: "¿Cómo pagó el cliente?",
-    icon: "question",
-    showDenyButton: true,
-    showCancelButton: true,
-    confirmButtonText: "Efectivo",
-    denyButtonText: "Tarjeta",
-    cancelButtonText: "Otro",
-    reverseButtons: false,
-  });
-
-  let payment_method;
-  if (d1) return;
-  if (payMethod === true) payment_method = "efectivo";
-  else if (payMethod === false) payment_method = "tarjeta";
-  else payment_method = "otro";
-
-  const { isConfirmed: wantReceipt, isDismissed: d2 } = await Swal.fire({
-    title: "¿Generar boleta?",
-    icon: "question",
-    showConfirmButton: true,
-    showDenyButton: true,
-    confirmButtonText: "Sí, generar",
-    denyButtonText: "No, solo cerrar",
-  });
-
-  if (d2) return;
-
-  let client_name = null;
-  let client_doc = null;
-
-  if (wantReceipt) {
-    const { value: formValues, isDismissed: d3 } = await Swal.fire({
-      title: "Datos del cliente",
-      html: `
-        <input id="swal-name" class="swal2-input" placeholder="Nombre (opcional)">
-        <input id="swal-doc" class="swal2-input" placeholder="Documento (opcional)">
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: "Generar",
-      cancelButtonText: "Cancelar",
-      preConfirm: () => ({
-        name: document.getElementById("swal-name").value,
-        doc: document.getElementById("swal-doc").value,
-      }),
-    });
-    if (d3) return;
-    client_name = formValues?.name || null;
-    client_doc = formValues?.doc || null;
-  }
-
+async function confirmClose() {
   closing.value = true;
   try {
     const { data } = await api.post(`/comandas/${comanda.value.id}/close`, {
-      payment_method,
-      generate_receipt: wantReceipt,
-      client_name,
-      client_doc,
+      payment_method: closeModal.payment,
+      generate_receipt: true,
+      client_name: closeModal.client_name || null,
+      client_doc: closeModal.client_doc || null,
     });
-
-    let html = `<p class="text-sm">Total: <strong>S/ ${Number(data.total).toFixed(2)}</strong> · ${payment_method}</p>`;
-    if (data.pdf_url) {
-      html += `<p class="mt-2 text-sm"><a href="${data.pdf_url}" target="_blank" class="text-blue-500 underline">Ver boleta PDF</a></p>`;
-    }
-
-    await Swal.fire({ title: "Mesa cerrada", html, icon: "success" });
-    router.push("/tables");
+    closeModal.show = false;
+    receiptResult.value = data;
   } catch (e) {
-    Swal.fire("Error", e.response?.data?.error || "Error cerrando mesa", "error");
+    toastError(e.response?.data?.error || "Error cerrando mesa");
   } finally {
     closing.value = false;
   }
+}
+
+function onReceiptClose() {
+  receiptResult.value = null;
+  router.push("/tables");
 }
 </script>

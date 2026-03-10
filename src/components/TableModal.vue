@@ -60,7 +60,9 @@
 <script setup>
 import { ref, watch } from "vue";
 import api from "@/api/axios";
-import Swal from "sweetalert2";
+import { useToast } from "@/composables/useToast";
+
+const { error: toastError } = useToast();
 
 const props = defineProps({ table: Object });
 const emit = defineEmits(["close", "saved"]);
@@ -90,7 +92,7 @@ async function save() {
     }
     emit("saved");
   } catch (e) {
-    Swal.fire("Error", e.response?.data?.error || "Error guardando mesa", "error");
+    toastError(e.response?.data?.error || "Error guardando mesa");
   } finally {
     loading.value = false;
   }

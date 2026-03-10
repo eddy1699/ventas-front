@@ -10,8 +10,24 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <template v-if="loading">
+      <div class="md:hidden space-y-2">
+        <div v-for="i in 6" :key="i" class="bg-card border border-border rounded-xl p-3 flex items-center gap-3 animate-pulse">
+          <div class="w-12 h-12 rounded-lg bg-border shrink-0"></div>
+          <div class="flex-1 space-y-2"><div class="h-3 bg-border rounded w-3/4"></div><div class="h-3 bg-border rounded w-1/3"></div></div>
+        </div>
+      </div>
+      <div class="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
+        <div v-for="i in 6" :key="i" class="p-3 border-b border-border/40 flex gap-3 items-center animate-pulse">
+          <div class="w-12 h-12 rounded-md bg-border shrink-0"></div>
+          <div class="flex-1 space-y-2"><div class="h-3 bg-border rounded w-1/3"></div><div class="h-3 bg-border rounded w-1/4"></div></div>
+        </div>
+      </div>
+    </template>
+
     <!-- Mobile: cards -->
-    <div class="md:hidden space-y-2">
+    <div v-if="!loading" class="md:hidden space-y-2">
       <div
         v-for="p in products"
         :key="p.id"
@@ -50,7 +66,7 @@
     </div>
 
     <!-- Desktop: table -->
-    <div class="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
+    <div v-if="!loading" class="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-background/40 border-b border-border">
           <tr>
@@ -120,10 +136,16 @@ import { categoryEmoji } from "@/utils/categoryEmoji.js";
 const products = ref([]);
 const showModal = ref(false);
 const editingProduct = ref(null);
+const loading = ref(false);
 
 const fetchProducts = async () => {
-  const { data } = await api.get("/products");
-  products.value = data;
+  loading.value = true;
+  try {
+    const { data } = await api.get("/products");
+    products.value = data;
+  } finally {
+    loading.value = false;
+  }
 };
 
 const openModal = (p = null) => {

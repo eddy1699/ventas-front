@@ -11,7 +11,8 @@
           <input
             v-model="form.name"
             required
-            class="w-full px-3 py-2 border rounded-md bg-background"
+            :disabled="loading"
+            class="w-full px-3 py-2 border rounded-md bg-background disabled:opacity-50"
             placeholder="Ej. Pollo a la brasa"
           />
         </div>
@@ -21,9 +22,10 @@
           <select
             v-model="form.category"
             required
-            class="w-full px-3 py-2 border rounded-md bg-background"
+            :disabled="loading"
+            class="w-full px-3 py-2 border rounded-md bg-background disabled:opacity-50"
           >
-            <option value="cóctel">Cóctel</option>
+            <option value="coctel">Cóctel</option>
             <option value="limonada">Limonada</option>
             <option value="frappe">Frappe</option>
             <option value="jugo">Jugo</option>
@@ -44,7 +46,8 @@
             min="0"
             step="0.01"
             required
-            class="w-full px-3 py-2 border rounded-md bg-background"
+            :disabled="loading"
+            class="w-full px-3 py-2 border rounded-md bg-background disabled:opacity-50"
             placeholder="0.00"
           />
         </div>
@@ -59,8 +62,9 @@
             <input
               type="file"
               accept="image/*"
+              :disabled="loading"
               @change="handleFileUpload"
-              class="text-xs text-foreground/70 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+              class="text-xs text-foreground/70 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer disabled:opacity-50"
             />
           </div>
         </div>
@@ -68,16 +72,22 @@
         <div class="flex justify-end space-x-2 pt-4 border-t border-border/50">
           <button
             type="button"
+            :disabled="loading"
             @click="$emit('close')"
-            class="px-4 py-2 text-sm border rounded-md hover:bg-background/60 transition"
+            class="px-4 py-2 text-sm border rounded-md hover:bg-background/60 transition disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="px-4 py-2 bg-primary text-white rounded-md text-sm hover:opacity-90 transition"
+            :disabled="loading"
+            class="px-4 py-2 bg-primary text-white rounded-md text-sm hover:opacity-90 transition disabled:opacity-70 flex items-center gap-2"
           >
-            {{ product ? "Guardar cambios" : "Agregar producto" }}
+            <svg v-if="loading" class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            {{ loading ? "Guardando..." : (product ? "Guardar cambios" : "Agregar producto") }}
           </button>
         </div>
       </form>
@@ -88,11 +98,16 @@
 <script setup>
 import { ref, watch, reactive } from "vue";
 import api from "@/api/axios";
+import { useToast } from "@/composables/useToast";
+
+const { success: toastSuccess, error: toastError } = useToast();
 
 const props = defineProps({
   product: Object,
 });
 const emit = defineEmits(["close", "saved"]);
+
+const loading = ref(false);
 
 const form = reactive({
   name: "",
@@ -135,6 +150,7 @@ const handleFileUpload = (e) => {
 };
 
 const saveProduct = async () => {
+  loading.value = true;
   try {
     const formData = new FormData();
     formData.append("name", form.name);
@@ -154,9 +170,13 @@ const saveProduct = async () => {
 
     emit("saved");
     emit("close");
+    toastSuccess("Producto guardado correctamente");
   } catch (err) {
-    console.error("❌ Error guardando producto:", err);
-    alert(err.response?.data?.error || "No se pudo guardar el producto");
+    const msg = err.response?.data?.error || "No se pudo guardar el producto";
+    console.error("❌ Error guardando producto:", msg, err);
+    toastError(msg);
+  } finally {
+    loading.value = false;
   }
 };
 </script>
